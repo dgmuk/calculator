@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор Висцерального Жира</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        deepGray: '#111827',
+                        graphite: '#1F2937',
+                        steel: '#374151',
+                        brandOrange: '#F97316',
+                        darkOrange: '#EA580C',
+                        successGreen: '#22C55E',
+                        dangerRed: '#DC2626',
+                        tealAccent: '#14B8A6',
+                        lightGray: '#D1D5DB',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-deepGray text-lightGray min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-md">
+        
+        <header class="mb-6 text-center">
+            <div class="inline-flex items-center justify-center p-3 mb-4 rounded-full bg-graphite border border-steel shadow-lg">
+                <svg class="text-brandOrange w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-1">Анализ Жира</h1>
+            <p class="text-sm text-lightGray opacity-70">Проверьте риски для здоровья</p>
+        </header>
+
+        <div class="bg-graphite border border-steel rounded-2xl p-6 shadow-xl mb-6">
+            
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button id="btn-male" onclick="selectGender('male')" class="p-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 bg-deepGray border-tealAccent text-tealAccent shadow-[0_0_10px_rgba(20,184,166,0.2)]">
+                    Мужчина
+                </button>
+                <button id="btn-female" onclick="selectGender('female')" class="p-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 bg-deepGray border-steel text-gray-500 hover:border-gray-500">
+                    Женщина
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-gray-400">Рост (см)</label>
+                    <input type="number" id="input-height" placeholder="180" class="w-full bg-deepGray border border-steel rounded-lg p-3 text-white focus:outline-none focus:border-tealAccent focus:ring-1 focus:ring-tealAccent transition-all placeholder-gray-700">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-gray-400">Талия (см)</label>
+                        <input type="number" id="input-waist" placeholder="85" class="w-full bg-deepGray border border-steel rounded-lg p-3 text-white focus:outline-none focus:border-tealAccent focus:ring-1 focus:ring-tealAccent transition-all placeholder-gray-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-gray-400">Бедра (см)</label>
+                        <input type="number" id="input-hip" placeholder="95" class="w-full bg-deepGray border border-steel rounded-lg p-3 text-white focus:outline-none focus:border-tealAccent focus:ring-1 focus:ring-tealAccent transition-all placeholder-gray-700">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="calculate()" class="w-full mt-8 bg-brandOrange hover:bg-darkOrange text-white font-bold py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-orange-900/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                Рассчитать риски
+            </button>
+            
+            <p id="error-msg" class="text-dangerRed text-center mt-4 hidden text-sm font-medium animate-pulse">Заполните все поля корректно.</p>
+        </div>
+
+        <div id="result-card" class="bg-graphite border border-steel rounded-2xl p-6 shadow-2xl fade-in hidden relative overflow-hidden">
+            
+            <div class="flex justify-between items-start mb-6 border-b border-steel pb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Результат анализа</h2>
+                    <p class="text-xs text-gray-400 mt-1">Дата: <span id="current-date"></span></p>
+                </div>
+                <div id="overall-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase bg-gray-700 text-white">
+                    ---
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-deepGray rounded-xl p-3 border border-steel">
+                    <span class="text-xs text-gray-400 block mb-1">Талия / Бедра</span>
+                    <span id="val-whr" class="text-xl font-bold text-white block">0.00</span>
+                    <span id="status-whr" class="text-xs font-medium">---</span>
+                </div>
+                <div class="bg-deepGray rounded-xl p-3 border border-steel">
+                    <span class="text-xs text-gray-400 block mb-1">Талия / Рост</span>
+                    <span id="val-whtr" class="text-xl font-bold text-white block">0.00</span>
+                    <span id="status-whtr" class="text-xs font-medium">---</span>
+                </div>
+            </div>
+
+            <div id="analysis-box" class="bg-deepGray border-l-4 rounded-r-lg p-4 text-sm leading-relaxed mb-4">
+                <h3 id="analysis-title" class="font-bold text-white mb-2 text-base">---</h3>
+                <p id="analysis-text" class="text-gray-300 opacity-90">---</p>
+            </div>
+
+            <div class="flex items-start gap-3 mt-4 pt-4 border-t border-steel">
+                <div class="text-tealAccent mt-0.5">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <p class="text-xs text-gray-400 italic">
+                    Висцеральный жир — это жир вокруг органов. В отличие от подкожного, он активен метаболически и влияет на гормоны.
+                </p>
+            </div>
+        </div>
+        
+        <div class="h-10"></div>
+    </div>
+
+    <script>
+        let currentGender = 'male';
+
+        // Установка даты
+        const dateObj = new Date();
+        document.getElementById('current-date').innerText = dateObj.toLocaleDateString('ru-RU');
+
+        function selectGender(gender) {
+            currentGender = gender;
+            const btnMale = document.getElementById('btn-male');
+            const btnFemale = document.getElementById('btn-female');
+            
+            const activeClasses = ['bg-deepGray', 'border-tealAccent', 'text-tealAccent', 'shadow-[0_0_10px_rgba(20,184,166,0.2)]'];
+            const inactiveClasses = ['bg-deepGray', 'border-steel', 'text-gray-500', 'hover:border-gray-500', 'shadow-none'];
+
+            if (gender === 'male') {
+                btnMale.className = `p-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${activeClasses.join(' ')}`;
+                btnFemale.className = `p-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${inactiveClasses.join(' ')}`;
+            } else {
+                btnFemale.className = `p-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${activeClasses.join(' ')}`;
+                btnMale.className = `p-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${inactiveClasses.join(' ')}`;
+            }
+        }
+
+        function calculate() {
+            const height = parseFloat(document.getElementById('input-height').value);
+            const waist = parseFloat(document.getElementById('input-waist').value);
+            const hip = parseFloat(document.getElementById('input-hip').value);
+            const errorMsg = document.getElementById('error-msg');
+            const resultCard = document.getElementById('result-card');
+
+            if (!height || !waist || !hip) {
+                errorMsg.classList.remove('hidden');
+                resultCard.classList.add('hidden');
+                return;
+            }
+            errorMsg.classList.add('hidden');
+
+            const whr = (waist / hip).toFixed(2);
+            const whtr = (waist / height).toFixed(2);
+
+            // 0 = Green, 1 = Orange, 2 = Red
+            let riskLevel = 0; 
+
+            // Logic for WHR
+            let statusWHR = "Норма";
+            let colorWHR = "text-successGreen";
+
+            if (currentGender === 'male') {
+                if (whr > 1.0) { statusWHR = "Критично"; colorWHR = "text-dangerRed"; riskLevel = Math.max(riskLevel, 2); }
+                else if (whr > 0.9) { statusWHR = "Повышен"; colorWHR = "text-brandOrange"; riskLevel = Math.max(riskLevel, 1); }
+            } else {
+                if (whr > 0.85) { statusWHR = "Критично"; colorWHR = "text-dangerRed"; riskLevel = Math.max(riskLevel, 2); }
+                else if (whr > 0.80) { statusWHR = "Повышен"; colorWHR = "text-brandOrange"; riskLevel = Math.max(riskLevel, 1); }
+            }
+
+            // Logic for WHtR
+            let statusWHtR = "Отлично";
+            let colorWHtR = "text-successGreen";
+            if (whtr > 0.6) { statusWHtR = "Высокий риск"; colorWHtR = "text-dangerRed"; riskLevel = Math.max(riskLevel, 2); }
+            else if (whtr > 0.5) { statusWHtR = "Есть избыток"; colorWHtR = "text-brandOrange"; riskLevel = Math.max(riskLevel, 1); }
+
+            // Update DOM Numbers
+            document.getElementById('val-whr').innerText = whr;
+            document.getElementById('status-whr').innerText = statusWHR;
+            document.getElementById('status-whr').className = `text-xs font-bold uppercase ${colorWHR}`;
+
+            document.getElementById('val-whtr').innerText = whtr;
+            document.getElementById('status-whtr').innerText = statusWHtR;
+            document.getElementById('status-whtr').className = `text-xs font-bold uppercase ${colorWHtR}`;
+
+            // Update Detailed Analysis
+            updateAnalysis(riskLevel);
+
+            // Show Card
+            resultCard.classList.remove('hidden');
+            resultCard.classList.remove('fade-in'); // reset animation
+            void resultCard.offsetWidth; // trigger reflow
+            resultCard.classList.add('fade-in');
+        }
+
+        function updateAnalysis(level) {
+            const box = document.getElementById('analysis-box');
+            const title = document.getElementById('analysis-title');
+            const text = document.getElementById('analysis-text');
+            const badge = document.getElementById('overall-badge');
+
+            if (level === 0) {
+                // Green Zone
+                box.className = "bg-deepGray border-l-4 border-successGreen rounded-r-lg p-4 text-sm leading-relaxed mb-4";
+                title.innerText = "Всё в порядке";
+                title.className = "font-bold text-successGreen mb-2 text-base";
+                text.innerHTML = "Ваши пропорции указывают на низкий уровень висцерального жира. Риск развития диабета и сердечно-сосудистых заболеваний минимален. <br><br><b>Рекомендация:</b> Поддерживайте текущий уровень активности.";
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase bg-green-900 text-green-300 border border-green-700";
+                badge.innerText = "Низкий Риск";
+            } 
+            else if (level === 1) {
+                // Orange Zone
+                box.className = "bg-deepGray border-l-4 border-brandOrange rounded-r-lg p-4 text-sm leading-relaxed mb-4";
+                title.innerText = "Внимание: «Тревожная зона»";
+                title.className = "font-bold text-brandOrange mb-2 text-base";
+                text.innerHTML = "Вы находитесь в пограничном состоянии. Жир начал скапливаться вокруг внутренних органов, даже если внешне это не сильно заметно. Это может влиять на уровень инсулина. <br><br><b>Рекомендация:</b> Сократите быстрые углеводы (сахар, мучное) и добавьте ходьбу 30 мин в день.";
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase bg-orange-900 text-orange-300 border border-orange-700";
+                badge.innerText = "Повышенный Риск";
+            } 
+            else {
+                // Red Zone
+                box.className = "bg-deepGray border-l-4 border-dangerRed rounded-r-lg p-4 text-sm leading-relaxed mb-4";
+                title.innerText = "Опасный уровень висцерального жира";
+                title.className = "font-bold text-dangerRed mb-2 text-base";
+                text.innerHTML = "Ваши показатели говорят об абдоминальном ожирении. Внутренние органы находятся под давлением жировой ткани. Это значительно повышает риск гипертонии и диабета 2 типа. <br><br><b>Рекомендация:</b> Необходим дефицит калорий. Рекомендуется консультация с эндокринологом.";
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase bg-red-900 text-red-300 border border-red-700";
+                badge.innerText = "Высокий Риск";
+            }
+        }
+    </script>
+</body>
+</html>
